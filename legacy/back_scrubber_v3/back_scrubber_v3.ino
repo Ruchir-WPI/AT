@@ -38,12 +38,12 @@
 // ============================================================
 
 // --- Pin definitions ---
-#define EN_PIN 2;
-#define V_DIR_PIN 3;
-#define V_STEP_PIN 4;
-#define H_DIR_PIN 5;
-#define H_STEP_PIN 6;
-#define BTN_PIN 7;
+const int EN_PIN     = 2;
+const int V_DIR_PIN  = 3;
+const int V_STEP_PIN = 4;
+const int H_DIR_PIN  = 5;
+const int H_STEP_PIN = 6;
+const int BTN_PIN    = 7;
 
 // --- Direction constants ---
 // If a motor runs the wrong way, swap HIGH and LOW for that axis only
@@ -53,15 +53,18 @@ const int V_DIR_DOWN  = HIGH;
 const int V_DIR_UP    = LOW;
 
 // --- Motion parameters ---
-const long H_TOTAL_STEPS  = 10160;  // 406.4mm * 25 steps/mm
-const long V_ROW_STEPS    =  2550;  // 102mm   * 25 steps/mm
-const int  NUM_ROWS       =     5;  // ceil(500mm / 102mm)
+const long H_TOTAL_STEPS = 10160;  // 406.4mm * 25 steps/mm
+const long V_ROW_STEPS   =  2550;  // 102mm   * 25 steps/mm
+const int  NUM_ROWS      =     5;  // ceil(500mm / 102mm)
 
 const unsigned int STEP_DELAY_US = 1000; // microseconds per step (tune to adjust speed)
 
 // --- State ---
 bool sequenceRunning = false;
 
+// ============================================================
+//  SETUP
+// ============================================================
 void setup() {
   pinMode(EN_PIN,     OUTPUT);
   pinMode(V_DIR_PIN,  OUTPUT);
@@ -76,6 +79,9 @@ void setup() {
   Serial.println("Ready. Press button to start sequence.");
 }
 
+// ============================================================
+//  MAIN LOOP
+// ============================================================
 void loop() {
   if (digitalRead(BTN_PIN) == LOW && !sequenceRunning) {
     delay(50); // debounce
@@ -87,6 +93,10 @@ void loop() {
   }
 }
 
+// ============================================================
+//  FULL SCRUB SEQUENCE
+//  Assumes carriage is already at top-left when button pressed
+// ============================================================
 void runSequence() {
   Serial.println("Sequence started.");
   enableMotors();
@@ -114,13 +124,16 @@ void runSequence() {
 
   // Return to top-left home position
   Serial.println("Returning to start...");
-  moveSteps(H_STEP_PIN, H_DIR_PIN, H_DIR_LEFT,  H_TOTAL_STEPS);      // go back left
-  moveSteps(V_STEP_PIN, V_DIR_PIN, V_DIR_UP,    V_ROW_STEPS * (NUM_ROWS - 1)); // go back up
+  moveSteps(H_STEP_PIN, H_DIR_PIN, H_DIR_LEFT, H_TOTAL_STEPS);
+  moveSteps(V_STEP_PIN, V_DIR_PIN, V_DIR_UP,   V_ROW_STEPS * (NUM_ROWS - 1));
 
   disableMotors();
   Serial.println("Sequence complete. Ready for next press.");
 }
 
+// ============================================================
+//  MOVE A GIVEN NUMBER OF STEPS IN A DIRECTION
+// ============================================================
 void moveSteps(int stepPin, int dirPin, int dir, long steps) {
   digitalWrite(dirPin, dir);
   delayMicroseconds(200); // settle direction signal before pulsing
@@ -129,6 +142,9 @@ void moveSteps(int stepPin, int dirPin, int dir, long steps) {
   }
 }
 
+// ============================================================
+//  PULSE THE STEP PIN ONCE
+// ============================================================
 void stepOnce(int stepPin) {
   digitalWrite(stepPin, HIGH);
   delayMicroseconds(STEP_DELAY_US / 2);
@@ -136,6 +152,9 @@ void stepOnce(int stepPin) {
   delayMicroseconds(STEP_DELAY_US / 2);
 }
 
+// ============================================================
+//  ENABLE / DISABLE MOTORS
+// ============================================================
 void enableMotors() {
   digitalWrite(EN_PIN, LOW);
   delay(10);
